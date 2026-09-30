@@ -5,7 +5,7 @@ description = "Add your description here"
 authors = [
     { name = "Bertrand Jayles", email = "bertrand.jayles@gmail.com" }
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 dependencies = [
     "ipykernel>=6.31.0",
     "jupyter>=1.1.1",
