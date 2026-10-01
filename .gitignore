@@ -216,3 +216,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Draft, not ready to publish yet — remove this line once comfortable sharing it,
+# then `git add APPROACH.md` to actually track and commit it.
+APPROACH.md
