@@ -58,9 +58,11 @@ converge" to "would this hold up if someone else depended on it."
 ## Repository structure
 
 ```
-learning/   self-contained ML exercises, one module per directory
-projects/   polished, standalone builds (none yet; see `projects/` logic above)
-src/        reusable code promoted out of notebooks once it stabilizes
+learning/                       self-contained ML exercises, one module per directory
+  01-regression-housing/        regression: California housing prices
+  02-classification-ecommerce/  classification + SQL: Olist repeat purchases (in progress)
+projects/                       polished, standalone builds (none yet; see `projects/` logic above)
+src/                            reusable code promoted out of notebooks once it stabilizes
 ```
 
 ## Setup
