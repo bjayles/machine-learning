@@ -1254,7 +1254,7 @@ wheels = [
 [[package]]
 name = "machine-learning"
 version = "0.1.0"
-source = { editable = "." }
+source = { virtual = "." }
 dependencies = [
     { name = "duckdb" },
     { name = "ipykernel" },

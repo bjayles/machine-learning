@@ -66,8 +66,9 @@ converge" to "would this hold up if someone else depended on it."
 learning/                       self-contained ML exercises, one module per directory
   01-regression-housing/        regression: California housing prices — Random Forest, -66% MAE vs. naive baseline
   02-classification-ecommerce/  classification + SQL: Olist repeat purchases (in progress)
-projects/                       polished, standalone builds (none yet; see `projects/` logic above)
-src/                            reusable code promoted out of notebooks once it stabilizes
+projects/                       polished, standalone builds (see `projects/` logic above)
+  01-hdb-resale/                Singapore HDB resale price estimator, end-to-end MLOps (step 0: framing done)
+docs/adr/                       repo-wide decisions
 ```
 
 ## Setup

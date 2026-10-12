@@ -6,22 +6,26 @@ How the engineering skills should consume this repo's domain documentation when 
 
 - **`GLOSSARY.md`** at the repo root, or
 - **`GLOSSARY-MAP.md`** at the repo root if it exists: it points at one `GLOSSARY.md` per context. Read each one relevant to the topic.
-- **`docs/adr/`**: read ADRs that touch the area you're about to work in. In multi-context repos, also check `src/<context>/docs/adr/` for context-scoped decisions.
+- **`docs/adr/`**: read ADRs that touch the area you're about to work in. In multi-context repos, also check `projects/<project>/docs/adr/` for project-scoped decisions.
 
 If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The `/domain-modeling` skill (reached via `/grill-with-docs` and `/improve-codebase-architecture`) creates them lazily when terms or decisions actually get resolved.
 
 ## File structure
 
-Single-context repo (this repo):
+Multi-context monorepo (this repo): each project in `projects/` is its own context, with its own glossary and ADRs. Repo-wide decisions live at the root.
 
 ```
 /
-├── GLOSSARY.md
-├── docs/adr/
-│   ├── 0001-....md
-│   └── 0002-....md
-└── src/
+├── GLOSSARY-MAP.md              ← lists each project's glossary
+├── docs/adr/                    ← repo-wide decisions (e.g. monorepo conventions)
+├── learning/                    ← no glossary or ADRs (low-ceremony exercises)
+└── projects/
+    └── 01-hdb-resale/
+        ├── GLOSSARY.md
+        └── docs/adr/            ← project-scoped decisions
 ```
+
+A new project gets its own `GLOSSARY.md` and `docs/adr/` (created lazily) and a line in `GLOSSARY-MAP.md`. ADR numbering restarts at 0001 in each `docs/adr/` folder; refer to them as "repo ADR-NNNN" or "project ADR-NNNN" when ambiguous.
 
 ## Use the glossary's vocabulary
 
