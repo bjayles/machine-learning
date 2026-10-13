@@ -1,0 +1,23 @@
+{
+  "dataset_id": "d_8b84c4ee58e3cfc0ece0d773c8ca6abc",
+  "source": "https://data.gov.sg/datasets/d_8b84c4ee58e3cfc0ece0d773c8ca6abc/view",
+  "accessed_at": "2026-10-13T02:51:21+00:00",
+  "source_last_modified": "2026-10-12T19:06:44+00:00",
+  "file": "resale.csv",
+  "sha256": "d5e8377bdce7ac1200f3f9c34536fd18e427ff4af7d297855570aedbf9863137",
+  "size_bytes": 23990597,
+  "rows": 242537,
+  "columns": [
+    "month",
+    "town",
+    "flat_type",
+    "block",
+    "street_name",
+    "storey_range",
+    "floor_area_sqm",
+    "flat_model",
+    "lease_commence_date",
+    "remaining_lease",
+    "resale_price"
+  ]
+}

@@ -67,7 +67,7 @@ learning/                       self-contained ML exercises, one module per dire
   01-regression-housing/        regression: California housing prices — Random Forest, -66% MAE vs. naive baseline
   02-classification-ecommerce/  classification + SQL: Olist repeat purchases (in progress)
 projects/                       polished, standalone builds (see `projects/` logic above)
-  01-hdb-resale/                Singapore HDB resale price estimator, end-to-end MLOps (step 0: framing done)
+  01-hdb-resale/                Singapore HDB resale price estimator, end-to-end MLOps (step 1: ingestion + DVC done)
 docs/adr/                       repo-wide decisions
 ```
 

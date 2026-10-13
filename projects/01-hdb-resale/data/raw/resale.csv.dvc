@@ -1,0 +1,5 @@
+outs:
+- md5: f5fc86f82bfc1224c959d9c7a6c7a3aa
+  size: 23990597
+  hash: md5
+  path: resale.csv
