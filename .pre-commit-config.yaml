@@ -1,10 +1,30 @@
 # Checks git runs before each commit (see https://pre-commit.com).
 # One-time setup per clone: `uv tool install pre-commit`, then `pre-commit install`.
 #
-# Each project's hooks run that project's own Ruff (pinned in its uv.lock), from its
-# folder, so the hook, the terminal and CI always use the same version and settings.
+# Repo-wide hooks are pinned by `rev` (update with `pre-commit autoupdate`). Project
+# hooks run that project's own Ruff (pinned in its uv.lock), from its folder, so the
+# hook, the terminal and CI always use the same version and settings.
 
 repos:
+  # Repo-wide safety checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files  # data belongs in DVC, never in git
+        args: [--maxkb=1000]         # 1 MB: notebooks with charts fit, datasets don't
+      - id: detect-private-key       # SSH/TLS private keys
+      - id: no-commit-to-branch      # changes reach main through PRs only
+      - id: check-yaml               # incl. DVC pointer files (.dvc)
+      - id: check-toml               # pyproject.toml
+      - id: check-merge-conflict     # leftover <<<<<<< markers
+
+  # Secrets scanner: AWS keys, API tokens, passwords
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks
+
+  # Project-specific checks
   - repo: local
     hooks:
       # projects/01-hdb-resale: lint (fixing what's safe), then format
