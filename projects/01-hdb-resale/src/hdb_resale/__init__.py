@@ -1,2 +1,1 @@
-def main() -> None:
-    print("Hello from hdb-resale!")
+"""Fair resale price estimator for Singapore HDB flats."""
