@@ -17,6 +17,12 @@ repos:
       - id: check-yaml               # incl. DVC pointer files (.dvc)
       - id: check-toml               # pyproject.toml
       - id: check-merge-conflict     # leftover <<<<<<< markers
+      # Tidiness: no invisible trailing spaces, every file ends with one newline
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]  # keep Markdown's two-space line breaks
+        exclude: \.ipynb$                    # notebooks are left exactly as Jupyter saves them
+      - id: end-of-file-fixer
+        exclude: \.ipynb$
 
   # Secrets scanner: AWS keys, API tokens, passwords
   - repo: https://github.com/gitleaks/gitleaks
