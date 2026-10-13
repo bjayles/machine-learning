@@ -21,4 +21,23 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "dvc[s3]>=3.67.1",
+    "ruff>=0.17.0",
 ]
+
+[tool.ruff.lint]
+# Defaults (E4, E7, E9, F) + bugs, modern syntax, readability, docstrings, naming
+select = [
+    "E4", "E7", "E9", "F",  # Ruff defaults: real errors
+    "I",                    # import sorting
+    "UP",                   # modern Python syntax
+    "B",                    # likely bugs
+    "SIM",                  # simpler equivalent code
+    "RUF",                  # Ruff's own best practices
+    "D",                    # docstrings
+    "N",                    # naming conventions
+    "ERA",                  # commented-out code
+    "C90",                  # function complexity
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

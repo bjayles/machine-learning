@@ -18,7 +18,8 @@ from hdb_resale.ingest import ingest
 
 
 def main() -> None:
-    parser      = argparse.ArgumentParser(prog="hdb-resale", description="HDB resale price estimator.")
+    """Parse the subcommand and its options, then run the matching function."""
+    parser     = argparse.ArgumentParser(prog="hdb-resale", description="HDB resale price estimator.")
     subcommands = parser.add_subparsers(dest="command", required=True)
 
     # hdb-resale ingest
