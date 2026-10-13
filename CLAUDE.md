@@ -10,4 +10,8 @@ Default canonical labels (`needs-triage`, `needs-info`, `ready-for-agent`, `read
 
 ### Domain docs
 
-Single-context layout (`GLOSSARY.md` + `docs/adr/` at repo root). See `docs/agents/domain.md`.
+Multi-context layout (`GLOSSARY-MAP.md` → one `GLOSSARY.md` per project, ADRs at root and per project). See `docs/agents/domain.md`.
+
+### Workflow
+
+Branches and PRs, pre-commit hooks, project commands, AWS profiles. See `docs/agents/workflow.md`.
