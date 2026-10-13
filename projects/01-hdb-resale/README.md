@@ -1,6 +1,7 @@
 # HDB Resale Price Estimator
 
-**Status:** step 0 (framing) complete. No code yet.
+**Status:** step 1 (ingestion + DVC data versioning) complete. The raw
+snapshot is versioned with DVC; no model yet.
 
 An estimator of fair resale prices for Singapore HDB flats, built as a
 production-standard ML project: versioned data, a reproducible pipeline,
@@ -87,7 +88,6 @@ is retrained monthly and used on the following month. See
 
 | Decision | Step |
 |---|---|
-| DVC remote provider (Cloudflare R2 vs AWS S3) | 1 |
 | Primary metric and the "good enough" threshold | 2 |
 | Geocoding via OneMap (separate terms and account) | 2 |
 | MLflow hosting | 3 |
@@ -101,12 +101,41 @@ is retrained monthly and used on the following month. See
 - [ADR-0003](docs/adr/0003-private-dvc-remote.md): the DVC remote is private
 
 Repo-wide conventions (independent package, shared data bucket) are in the
-root [ADR-0001](../../docs/adr/0001-monorepo-conventions.md).
+root [ADR-0001](../../docs/adr/0001-monorepo-conventions.md), and the data
+storage setup (S3 in a dedicated workloads account) in root
+[ADR-0002](../../docs/adr/0002-s3-in-a-workloads-account.md).
+
+## Getting the data
+
+Run everything from this folder (`projects/01-hdb-resale/`).
+
+**Use the versioned snapshot** (needs access to the private AWS account):
+
+```bash
+uv sync                                     # install the project and DVC
+aws sso login --profile bjayles-workloads-admin
+uv run dvc remote modify --local storage profile bjayles-workloads-admin
+uv run dvc pull                             # fetch data/raw/resale.csv from S3
+```
+
+The `dvc remote modify --local` line is needed once per clone: it tells DVC
+which AWS profile to use, in `.dvc/config.local`, which is not committed.
+
+**Or download a new snapshot** from data.gov.sg (no account needed):
+
+```bash
+uv run hdb-resale ingest                    # writes data/raw/resale.csv + snapshot.json
+uv run dvc add data/raw/resale.csv          # version it (then commit, and dvc push)
+```
+
+`data/raw/snapshot.json` records where and when each snapshot came from:
+access date, the source's last update, row count, columns, and a sha256
+fingerprint of the file.
 
 ## Data licence and attribution
 
 Contains information from *Resale flat prices based on registration date
-from Jan-2017 onwards* accessed on 2026-10-10 from data.gov.sg (Housing &
+from Jan-2017 onwards* accessed on 2026-10-13 from data.gov.sg (Housing &
 Development Board), which is made available under the terms of the
 [Singapore Open Data Licence version 1.0](https://data.gov.sg/open-data-licence).
 
