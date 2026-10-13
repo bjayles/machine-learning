@@ -82,6 +82,14 @@ uv sync
 
 Select the resulting `.venv` as the Jupyter kernel to run any notebook.
 
+Projects in `projects/` are linted and formatted with Ruff before each
+commit. Enable the git hook once per clone:
+
+```bash
+uv tool install pre-commit
+pre-commit install
+```
+
 ## Usage
 
 Each `learning/` module is a single notebook, meant to be read top to

@@ -1,0 +1,22 @@
+# Checks git runs before each commit (see https://pre-commit.com).
+# One-time setup per clone: `uv tool install pre-commit`, then `pre-commit install`.
+#
+# Each project's hooks run that project's own Ruff (pinned in its uv.lock), from its
+# folder, so the hook, the terminal and CI always use the same version and settings.
+
+repos:
+  - repo: local
+    hooks:
+      # projects/01-hdb-resale: lint (fixing what's safe), then format
+      - id: ruff-check-hdb-resale
+        name: ruff check (hdb-resale)
+        entry: uv run --quiet --directory projects/01-hdb-resale ruff check --fix
+        language: system
+        files: ^projects/01-hdb-resale/.*\.py$|^projects/01-hdb-resale/pyproject\.toml$
+        pass_filenames: false
+      - id: ruff-format-hdb-resale
+        name: ruff format (hdb-resale)
+        entry: uv run --quiet --directory projects/01-hdb-resale ruff format
+        language: system
+        files: ^projects/01-hdb-resale/.*\.py$|^projects/01-hdb-resale/pyproject\.toml$
+        pass_filenames: false
