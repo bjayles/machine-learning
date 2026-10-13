@@ -26,17 +26,17 @@ from pathlib import Path
 
 import httpx
 
-DATASET_ID   = "d_8b84c4ee58e3cfc0ece0d773c8ca6abc"
+DATASET_ID = "d_8b84c4ee58e3cfc0ece0d773c8ca6abc"
 DATASET_PAGE = f"https://data.gov.sg/datasets/{DATASET_ID}/view"
-API_BASE     = f"https://api-open.data.gov.sg/v1/public/api/datasets/{DATASET_ID}"
+API_BASE = f"https://api-open.data.gov.sg/v1/public/api/datasets/{DATASET_ID}"
 
 SNAPSHOT_FILE = "resale.csv"
 METADATA_FILE = "snapshot.json"
 
 # Unauthenticated quota is 5 requests/minute: poll well under it
-POLL_SECONDS     = 15
-MAX_POLLS        = 20
-RATE_LIMIT_WAIT  = 60
+POLL_SECONDS = 15
+MAX_POLLS = 20
+RATE_LIMIT_WAIT = 60
 MAX_RATE_RETRIES = 3
 
 
@@ -62,7 +62,7 @@ def _get_download_url(client: httpx.Client) -> str:
 
     for _ in range(MAX_POLLS):
         time.sleep(POLL_SECONDS)
-        data   = _call_api(client, "poll-download")
+        data = _call_api(client, "poll-download")
         status = data.get("status", "")
         print(f"Download status: {status}")
         if status == "DOWNLOAD_SUCCESS":
@@ -73,12 +73,14 @@ def _get_download_url(client: httpx.Client) -> str:
     raise TimeoutError(f"File not ready after {MAX_POLLS * POLL_SECONDS}s")
 
 
-def _download(client: httpx.Client, url: str, dest: Path) -> tuple[str, int, str | None]:
+def _download(
+    client: httpx.Client, url: str, dest: Path
+) -> tuple[str, int, str | None]:
     """Stream the file to `dest`, returning its sha256, size and source Last-Modified date."""
     # Write to a temporary file first, so a failed download never leaves a half-written snapshot
-    tmp    = dest.with_name(dest.name + ".part")
+    tmp = dest.with_name(dest.name + ".part")
     sha256 = hashlib.sha256()
-    size   = 0
+    size = 0
 
     with client.stream("GET", url) as response:
         response.raise_for_status()
@@ -101,7 +103,7 @@ def ingest(out_dir: Path) -> dict:
     """Download the full dataset into `out_dir` and record where and when it came from."""
     out_dir.mkdir(parents=True, exist_ok=True)
     snapshot_path = out_dir / SNAPSHOT_FILE
-    accessed_at   = datetime.now(UTC).isoformat(timespec="seconds")
+    accessed_at = datetime.now(UTC).isoformat(timespec="seconds")
 
     with httpx.Client(timeout=60) as client:
         url = _get_download_url(client)
@@ -110,20 +112,20 @@ def ingest(out_dir: Path) -> dict:
 
     # Read back the header and row count, to spot schema changes between snapshots
     with snapshot_path.open(newline="") as f:
-        reader  = csv.reader(f)
+        reader = csv.reader(f)
         columns = next(reader)
-        rows    = sum(1 for _ in reader)
+        rows = sum(1 for _ in reader)
 
     metadata = {
-        "dataset_id":           DATASET_ID,
-        "source":               DATASET_PAGE,
-        "accessed_at":          accessed_at,
+        "dataset_id": DATASET_ID,
+        "source": DATASET_PAGE,
+        "accessed_at": accessed_at,
         "source_last_modified": source_last_modified,
-        "file":                 SNAPSHOT_FILE,
-        "sha256":               sha256,
-        "size_bytes":           size,
-        "rows":                 rows,
-        "columns":              columns,
+        "file": SNAPSHOT_FILE,
+        "sha256": sha256,
+        "size_bytes": size,
+        "rows": rows,
+        "columns": columns,
     }
     (out_dir / METADATA_FILE).write_text(json.dumps(metadata, indent=2) + "\n")
     return metadata
