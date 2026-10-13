@@ -9,6 +9,7 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "httpx>=0.28.1",
+    "pandas>=3.0.6",
 ]
 
 [project.scripts]
@@ -23,6 +24,15 @@ dev = [
     "dvc[s3]>=3.67.1",
     "ruff>=0.17.0",
 ]
+notebooks = [
+    "ipykernel>=7.4.0",
+    "matplotlib>=3.11.2",
+    "seaborn>=0.13.2",
+]
+
+[tool.uv]
+# Installed by a plain `uv sync`; production images will skip both (step 6)
+default-groups = ["dev", "notebooks"]
 
 [tool.ruff.lint]
 # Defaults (E4, E7, E9, F) + bugs, modern syntax, readability, docstrings, naming
