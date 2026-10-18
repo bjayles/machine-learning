@@ -15,3 +15,7 @@ Multi-context layout (`GLOSSARY-MAP.md` → one `GLOSSARY.md` per project, ADRs 
 ### Workflow
 
 Branches and PRs, pre-commit hooks, project commands, AWS profiles. See `docs/agents/workflow.md`.
+
+### Notebooks
+
+Creating or editing any notebook: title, linked table of contents, findings, public-facing wording. See `docs/agents/notebooks.md`.

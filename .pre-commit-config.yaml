@@ -33,16 +33,16 @@ repos:
   # Project-specific checks
   - repo: local
     hooks:
-      # projects/01-hdb-resale: lint (fixing what's safe), then format
+      # projects/01-hdb-resale: lint (fixing what's safe), then format; .py files and notebooks
       - id: ruff-check-hdb-resale
         name: ruff check (hdb-resale)
         entry: uv run --quiet --directory projects/01-hdb-resale ruff check --fix
         language: system
-        files: ^projects/01-hdb-resale/.*\.py$|^projects/01-hdb-resale/pyproject\.toml$
+        files: ^projects/01-hdb-resale/.*\.(py|ipynb)$|^projects/01-hdb-resale/pyproject\.toml$
         pass_filenames: false
       - id: ruff-format-hdb-resale
         name: ruff format (hdb-resale)
         entry: uv run --quiet --directory projects/01-hdb-resale ruff format
         language: system
-        files: ^projects/01-hdb-resale/.*\.py$|^projects/01-hdb-resale/pyproject\.toml$
+        files: ^projects/01-hdb-resale/.*\.(py|ipynb)$|^projects/01-hdb-resale/pyproject\.toml$
         pass_filenames: false
