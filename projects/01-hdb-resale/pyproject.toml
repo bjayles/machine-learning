@@ -10,6 +10,8 @@ requires-python = ">=3.12"
 dependencies = [
     "httpx>=0.28.1",
     "pandas>=3.0.6",
+    "pandera>=0.34.1",
+    "pyarrow>=26.0.0",
 ]
 
 [project.scripts]
@@ -22,6 +24,7 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "dvc[s3]>=3.67.1",
+    "pytest>=9.1.1",
     "ruff>=0.17.0",
 ]
 notebooks = [
@@ -48,6 +51,14 @@ select = [
     "ERA",                  # commented-out code
     "C90",                  # function complexity
 ]
+
+[tool.ruff.lint.per-file-ignores]
+# Test names say what they check: no docstring required per test function
+"tests/**" = ["D103"]
+
+[tool.ruff.lint.isort]
+# Sort our own package's imports after third-party ones
+known-first-party = ["hdb_resale"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

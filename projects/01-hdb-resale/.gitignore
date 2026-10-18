@@ -1,0 +1,2 @@
+# Derived data: rebuilt from the raw snapshot by `uv run hdb-resale clean`
+/data/interim/
