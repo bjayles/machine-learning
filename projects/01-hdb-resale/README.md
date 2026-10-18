@@ -1,7 +1,7 @@
 # HDB Resale Price Estimator
 
-**Status:** step 1 (ingestion + DVC data versioning) complete. The raw
-snapshot is versioned with DVC; no model yet.
+**Status:** step 2 (baseline + time-based validation) in progress: the
+exploratory analysis and the cleaning code are done; no model yet.
 
 An estimator of fair resale prices for Singapore HDB flats, built as a
 production-standard ML project: versioned data, a reproducible pipeline,
@@ -131,6 +131,21 @@ uv run dvc add data/raw/resale.csv          # version it (then commit, and dvc p
 `data/raw/snapshot.json` records where and when each snapshot came from:
 access date, the source's last update, row count, columns, and a sha256
 fingerprint of the file.
+
+## Cleaning the data
+
+```bash
+uv run hdb-resale clean                     # data/raw/resale.csv -> data/interim/resale.parquet
+uv run pytest                               # the cleaning rules' tests
+```
+
+The cleaned table keeps every raw row and column, with typed and numeric
+versions added (registration month as a period, remaining lease in years,
+middle storey, flat model group). Each rule comes from the decision summary
+of the [EDA notebook](notebooks/01-eda.ipynb). The raw and cleaned tables
+are checked against data contracts (Pandera schemas in `schemas.py`), so
+any missing value, unknown format or changed column stops the cleaning. `data/interim/` is not versioned: it's
+rebuilt from the raw snapshot.
 
 ## Data licence and attribution
 
