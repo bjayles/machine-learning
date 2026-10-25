@@ -103,6 +103,7 @@ is retrained monthly and used on the following month. See
 - [ADR-0002](docs/adr/0002-full-raw-snapshots.md): raw data is a full, immutable snapshot
 - [ADR-0003](docs/adr/0003-private-dvc-remote.md): the DVC remote is private
 - [ADR-0004](docs/adr/0004-pandas-not-polars.md): pandas, not Polars, with Pandera data contracts
+- [ADR-0005](docs/adr/0005-month-levels-carried-forward.md): time as month levels, the latest carried forward
 
 Repo-wide conventions (independent package, shared data bucket) are in the
 root [ADR-0001](../../docs/adr/0001-monorepo-conventions.md), and the data
