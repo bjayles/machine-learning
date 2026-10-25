@@ -35,6 +35,7 @@ def backtest(
     model: Model,
     n_windows: int = 12,
     train_months: int | None = None,
+    end: str | None = None,
 ) -> pd.DataFrame:
     """Run the rolling backtest and return the test transactions with their estimates.
 
@@ -44,6 +45,9 @@ def backtest(
         n_windows: How many test months, counting back from the latest complete one.
         train_months: None trains on all earlier months (expanding window); N trains
             on the N months before the test month only (sliding window).
+        end: The first month not to test ("2025-10"), to backtest an earlier period,
+            e.g. validation months before the test period. Default: the latest
+            registration month, which is still filling up.
 
     Returns:
         The test months' transactions, with an `estimate` column next to the
@@ -51,8 +55,13 @@ def backtest(
     """
     data = CLEAN_SCHEMA.validate(data)
 
-    # The latest registration month is the current one, still filling up: never used
-    complete_months = sorted(data["month"].unique())[:-1]
+    # The latest registration month is the current one, still filling up: never used.
+    # With `end`, the data from that month on is set aside instead
+    if end is not None:
+        data = data[data["month"] < pd.Period(end, freq="M")]
+        complete_months = sorted(data["month"].unique())
+    else:
+        complete_months = sorted(data["month"].unique())[:-1]
     if n_windows >= len(complete_months):
         raise ValueError(
             f"{n_windows} windows need more than {len(complete_months)} complete months:"
