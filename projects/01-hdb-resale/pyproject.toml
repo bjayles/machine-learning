@@ -53,8 +53,8 @@ select = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# Test names say what they check: no docstring required per test function
-"tests/**" = ["D103"]
+# Test names say what they check: docstrings optional in tests
+"tests/**" = ["D1"]
 
 [tool.ruff.lint.isort]
 # Sort our own package's imports after third-party ones
