@@ -2,9 +2,12 @@
 
 **Status:** step 2 (baseline + time-based validation) in progress: the
 exploratory analysis, the cleaning code, the backtest harness and the naive
-baselines are done. The reference baseline (median of recent sales of the
-same town and flat type) is within 8.6% of the resale price for half of the
-test sales ([baselines notebook](notebooks/02-baselines.ipynb)); no model yet.
+baselines are done, and the first model too. A hedonic regression on all
+the drivers is within 5.3% of the resale price for half of the test sales
+([first-model notebook](notebooks/03-first-model.ipynb)), against 8.6% for
+the reference baseline, the median of recent sales of the same town and flat
+type ([baselines notebook](notebooks/02-baselines.ipynb)). Next: the
+residual analysis and the choice of metric.
 
 An estimator of fair resale prices for Singapore HDB flats, built as a
 production-standard ML project: versioned data, a reproducible pipeline,
@@ -158,6 +161,11 @@ Contains information from *Resale flat prices based on registration date
 from Jan-2017 onwards* accessed on 2026-10-13 from data.gov.sg (Housing &
 Development Board), which is made available under the terms of the
 [Singapore Open Data Licence version 1.0](https://data.gov.sg/open-data-licence).
+
+The [first-model notebook](notebooks/03-first-model.ipynb) also contains
+information from *HDB Resale Price Index (1Q2009 = 100), Quarterly* accessed
+on 2026-10-25 from data.gov.sg (Housing & Development Board), made available
+under the same licence, used to check the model's price index.
 
 The access date is updated with each data snapshot. The code is not
 licensed for reuse: all rights reserved (see the repo root `LICENSE`). That
