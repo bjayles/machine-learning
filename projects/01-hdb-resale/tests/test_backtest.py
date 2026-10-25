@@ -136,3 +136,18 @@ def test_score_reports_the_four_candidate_metrics_per_window():
     # Log-space MAE: |ln 1.1| / 2; (|ln 1.2| + |ln 0.9|) / 3
     assert scores.loc[march, "log_mae"] == pytest.approx(0.04766, abs=1e-5)
     assert scores.loc[april, "log_mae"] == pytest.approx(0.09589, abs=1e-5)
+
+
+def test_end_shifts_the_windows_earlier_for_validation():
+    model = SpyModel()
+
+    # Validation: stop testing before 2024-05, as if 2024-05 were the test period
+    predictions = backtest(make_clean(MONTHS), model, n_windows=2, end="2024-05")
+
+    assert sorted(predictions["month"].unique()) == months("2024-03", "2024-04")
+    # No window ever trains on 2024-05 or later
+    assert len(model.train_months) == 2
+    assert all(
+        max(trained_on) < pd.Period("2024-05", freq="M")
+        for trained_on in model.train_months
+    )

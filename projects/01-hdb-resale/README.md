@@ -1,7 +1,10 @@
 # HDB Resale Price Estimator
 
 **Status:** step 2 (baseline + time-based validation) in progress: the
-exploratory analysis and the cleaning code are done; no model yet.
+exploratory analysis, the cleaning code, the backtest harness and the naive
+baselines are done. The reference baseline (median of recent sales of the
+same town and flat type) is within 8.6% of the resale price for half of the
+test sales ([baselines notebook](notebooks/02-baselines.ipynb)); no model yet.
 
 An estimator of fair resale prices for Singapore HDB flats, built as a
 production-standard ML project: versioned data, a reproducible pipeline,
