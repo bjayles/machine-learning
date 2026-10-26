@@ -1,13 +1,12 @@
 # HDB Resale Price Estimator
 
-**Status:** step 2 (baseline + time-based validation) in progress: the
-exploratory analysis, the cleaning code, the backtest harness and the naive
-baselines are done, and the first model too. A hedonic regression on all
-the drivers is within 5.3% of the resale price for half of the test sales
-([first-model notebook](notebooks/03-first-model.ipynb)), against 8.6% for
-the reference baseline, the median of recent sales of the same town and flat
-type ([baselines notebook](notebooks/02-baselines.ipynb)). Next: the
-residual analysis and the choice of metric.
+**Status:** step 2 (baseline + time-based validation) complete. The
+current model, a hedonic regression with block-level location, is within
+3.1% of the resale price for half of the test sales, and within 8.7% for 9
+in 10 ([residual analysis](notebooks/04-residuals.ipynb)), against 8.6% and
+25.7% for the reference baseline, the median of recent sales of the same
+town and flat type ([baselines](notebooks/02-baselines.ipynb)). Next: step 3,
+the DVC pipeline and MLflow tracking.
 
 An estimator of fair resale prices for Singapore HDB flats, built as a
 production-standard ML project: versioned data, a reproducible pipeline,
@@ -45,30 +44,37 @@ with no key required.
 - **Registration lag.** Transactions appear when registered, weeks after the
   deal. The current month is always incomplete and is excluded from
   training and evaluation.
-- **No coordinates.** Location is town, block, and street only. Geocoding
-  (OneMap) is considered in step 2, only if errors show town-level location
-  isn't enough.
+- **No coordinates.** Location is town, block, and street only. Block-level
+  location captures most of what coordinates would add, so geocoding
+  (OneMap) is deferred: only 2% of flats are on a block with no recent sale
+  ([residual analysis](notebooks/04-residuals.ipynb), section 3).
 
 ### Evaluation
 
-Both a **relative** error (%) and an **absolute** error (S$) are reported.
-Which one is primary, and its exact form (log-space MAE, MAPE, MdAPE), is
-decided in step 2 from the residual analysis. Once price ranges exist, their
-**coverage** (share of real resale prices that land inside the range) is
-tracked too.
+The primary metric is the **log-space MAE**, the average of
+|log(estimate / resale price)|: it counts every error and treats 10% too
+high like 10% too low. It's read through the median and 90th-percentile %
+errors ("half within 3%, 9 in 10 within 9%"), with the MAE in S$ alongside.
+A model is **good enough** when its log-space MAE is at most half the
+reference baseline's and at most 0.05, 9 in 10 estimates fall within 10%,
+and its bias stays within ±1% ([ADR-0006](docs/adr/0006-log-mae-and-good-enough-threshold.md)).
+Once price ranges exist, their **coverage** (share of real resale prices that
+land inside the range) is tracked too.
 
 ### Validation
 
-A **rolling backtest with an expanding window**: train on the full history
-up to month T, test on month T+1, then move T forward one month and repeat,
-over about 12 monthly test windows. The training set grows each time; it
-never drops old months.
+A **rolling backtest**: train on the months before month T, test on month
+T+1, then move T forward one month and repeat, over 12 monthly test windows.
+How many past months each model trains on is one of its settings, chosen on
+a separate **validation period** (the 12 months before the test period):
+sliding windows won for every model so far (24 months for the current
+model).
 
 ```
-Window 1:  train [2017-01 ... 2025-09]  test 2025-10
-Window 2:  train [2017-01 ... 2025-10]  test 2025-11
+Window 1:  train [2023-10 ... 2025-09]  test 2025-10
+Window 2:  train [2023-11 ... 2025-10]  test 2025-11
 ...
-Window 12: train [2017-01 ... 2026-08]  test 2026-09
+Window 12: train [2024-09 ... 2026-08]  test 2026-09
 ```
 
 Repeating gives 12 scores instead of one: their average is more reliable
@@ -94,8 +100,8 @@ is retrained monthly and used on the following month. See
 
 | Decision | Step |
 |---|---|
-| Primary metric and the "good enough" threshold | 2 |
-| Geocoding via OneMap (separate terms and account) | 2 |
+| Primary metric and the "good enough" threshold | 2: decided ([ADR-0006](docs/adr/0006-log-mae-and-good-enough-threshold.md)) |
+| Geocoding via OneMap (separate terms and account) | 2: deferred, revisit if new blocks become a larger share |
 | MLflow hosting | 3 |
 | Demo name, input granularity, disclaimer wording, final legal check | 6 |
 | Keeping the monthly schedule running long term | 7 |
@@ -107,6 +113,7 @@ is retrained monthly and used on the following month. See
 - [ADR-0003](docs/adr/0003-private-dvc-remote.md): the DVC remote is private
 - [ADR-0004](docs/adr/0004-pandas-not-polars.md): pandas, not Polars, with Pandera data contracts
 - [ADR-0005](docs/adr/0005-month-levels-carried-forward.md): time as month levels, the latest carried forward
+- [ADR-0006](docs/adr/0006-log-mae-and-good-enough-threshold.md): log-space MAE as the primary metric, and the "good enough" threshold
 
 Repo-wide conventions (independent package, shared data bucket) are in the
 root [ADR-0001](../../docs/adr/0001-monorepo-conventions.md), and the data

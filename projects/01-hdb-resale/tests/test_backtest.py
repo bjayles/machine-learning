@@ -8,7 +8,7 @@ test month or later (project ADR-0001).
 import pandas as pd
 import pytest
 
-from hdb_resale.backtest import backtest, score
+from hdb_resale.backtest import backtest, good_enough, score
 
 from factories import make_clean
 
@@ -108,7 +108,7 @@ def test_too_few_months_fails_loudly():
         backtest(make_clean(MONTHS), SpyModel(), n_windows=5)
 
 
-def test_score_reports_the_four_candidate_metrics_per_window():
+def test_score_reports_error_size_bias_and_spread_per_window():
     # Worked by hand. 2024-03: one sale 10% over (550k vs 500k), one exact.
     # 2024-04: one 20% over (600k), one 10% under (450k), one exact.
     predictions = pd.DataFrame(
@@ -136,6 +136,13 @@ def test_score_reports_the_four_candidate_metrics_per_window():
     # Log-space MAE: |ln 1.1| / 2; (|ln 1.2| + |ln 0.9|) / 3
     assert scores.loc[march, "log_mae"] == pytest.approx(0.04766, abs=1e-5)
     assert scores.loc[april, "log_mae"] == pytest.approx(0.09589, abs=1e-5)
+    # Bias, the mean of log(price / estimate), > 0 when estimates are too low:
+    # March, ln(1/1.1) over 2 sales; April, ln(500/600) plus ln(500/450) over 3 sales
+    assert scores.loc[march, "bias"] == pytest.approx(-0.04766, abs=1e-5)
+    assert scores.loc[april, "bias"] == pytest.approx(-0.02565, abs=1e-5)
+    # 90th percentile of the % error, interpolated: of (0%, 10%); of (0%, 10%, 20%)
+    assert scores.loc[march, "p90_ape"] == pytest.approx(0.09)
+    assert scores.loc[april, "p90_ape"] == pytest.approx(0.18)
 
 
 def test_end_shifts_the_windows_earlier_for_validation():
@@ -151,3 +158,26 @@ def test_end_shifts_the_windows_earlier_for_validation():
         max(trained_on) < pd.Period("2024-05", freq="M")
         for trained_on in model.train_months
     )
+
+
+def scores_table(log_mae: float, p90_ape: float, bias: float) -> pd.DataFrame:
+    """Scores of two backtest windows with the same values."""
+    return pd.DataFrame(
+        {"log_mae": [log_mae] * 2, "p90_ape": [p90_ape] * 2, "bias": [bias] * 2}
+    )
+
+
+def test_good_enough_checks_each_condition_of_the_threshold():
+    baseline = scores_table(log_mae=0.12, p90_ape=0.25, bias=0.0)
+
+    passing = good_enough(scores_table(0.04, 0.08, 0.003), baseline)
+    # Each failing model breaks exactly one condition (project ADR-0006)
+    not_worth_it = good_enough(scores_table(0.065, 0.08, 0.003), baseline)  # > 0.12 / 2
+    wide_tail = good_enough(scores_table(0.04, 0.12, 0.003), baseline)  # p90 > 10%
+    biased = good_enough(scores_table(0.04, 0.08, -0.02), baseline)  # |bias| > 1%
+
+    assert passing.all()
+    assert not not_worth_it["half_the_baseline"]
+    assert not not_worth_it["log_mae"]  # 0.065 also breaks the 0.05 ceiling
+    assert not wide_tail["p90_ape"] and wide_tail.drop("p90_ape").all()
+    assert not biased["bias"] and biased.drop("bias").all()

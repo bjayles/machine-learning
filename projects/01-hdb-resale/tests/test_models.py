@@ -14,10 +14,20 @@ from hdb_resale.models import HedonicRegression
 from factories import make_raw
 
 
-def sale(month="2024-01", town="ANG MO KIO", sqm=64.0, lease="70 years", price=1.0):
+def sale(
+    month="2024-01",
+    town="ANG MO KIO",
+    block="406",
+    street="ANG MO KIO AVE 10",
+    sqm=64.0,
+    lease="70 years",
+    price=1.0,
+):
     return {
         "month": month,
         "town": town,
+        "block": block,
+        "street_name": street,
         "floor_area_sqm": float(sqm),
         "remaining_lease": lease,
         "resale_price": float(price),
@@ -116,3 +126,67 @@ def test_linear_lease_option_draws_one_straight_line_on_log_price():
     assert estimate(model, lease="65 years") == pytest.approx(
         (400_000 * 440_000) ** 0.5
     )
+
+
+def street_market() -> pd.DataFrame:
+    # Two Ang Mo Kio streets 10% apart, and one Tampines street
+    return table(
+        sale(street="AVE 1", price=400_000),
+        sale(street="AVE 2", price=440_000),
+        sale(town="TAMPINES", street="ST 1", price=500_000),
+    )
+
+
+def test_street_option_learns_each_streets_level():
+    model = HedonicRegression(location="street").fit(street_market())
+
+    # The town-level model would blend both streets: sqrt(400k x 440k), about 419.5k
+    assert estimate(model, street="AVE 2") == pytest.approx(440_000)
+
+
+def test_unseen_street_falls_back_to_the_town_level_model():
+    train = street_market()
+    model = HedonicRegression(location="street").fit(train)
+    town_level = HedonicRegression().fit(train)
+
+    # No sale on this street in training: use the model that only knows the town
+    assert estimate(model, street="NEW STREET") == pytest.approx(
+        estimate(town_level, street="NEW STREET")
+    )
+    assert estimate(model, street="NEW STREET") == pytest.approx(
+        (400_000 * 440_000) ** 0.5
+    )
+
+
+def block_market() -> pd.DataFrame:
+    # Two blocks of the same street 10% apart, a second street, and another town
+    return table(
+        sale(block="1", street="AVE 1", price=400_000),
+        sale(block="2", street="AVE 1", price=440_000),
+        sale(block="3", street="AVE 2", price=500_000),
+        sale(block="4", town="TAMPINES", street="ST 1", price=600_000),
+    )
+
+
+def test_block_option_learns_each_blocks_level():
+    model = HedonicRegression(location="block").fit(block_market())
+
+    assert estimate(model, block="2", street="AVE 1") == pytest.approx(440_000)
+
+
+def test_unseen_block_falls_back_to_the_street_level_model():
+    train = block_market()
+    model = HedonicRegression(location="block").fit(train)
+
+    # A new block on AVE 1: the street-level model's estimate, between its two blocks
+    new_block = {"block": "99", "street": "AVE 1"}
+    street_level = HedonicRegression(location="street").fit(train)
+    assert estimate(model, **new_block) == pytest.approx(
+        estimate(street_level, **new_block)
+    )
+    assert estimate(model, **new_block) == pytest.approx((400_000 * 440_000) ** 0.5)
+
+
+def test_unknown_location_level_fails_loudly():
+    with pytest.raises(ValueError, match="location"):
+        HedonicRegression(location="postcode")

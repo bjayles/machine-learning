@@ -13,3 +13,7 @@ used on the next.
 
 - **Single time holdout.** Rejected: one score from one period, with no view
   of how stable performance is from month to month.
+
+## Update (step 2)
+
+The training window doesn't have to expand. Its length became a setting of each model, chosen on a validation period (the 12 months before the test period): sliding windows won for every model, even with month levels in the model, because the effects themselves drift over time (notebooks/02-baselines.ipynb, 03-first-model.ipynb, 04-residuals.ipynb). The rest stands: always train on the past only and test on the next month.
