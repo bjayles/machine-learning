@@ -48,5 +48,5 @@ A full, unmodified copy of the source dataset as downloaded on a given date.
 _Avoid_: Dump, extract
 
 **Backtest window**:
-One step of the rolling backtest: train on all registration months up to T, test on month T+1.
+One step of the rolling backtest: train on registration months up to T (all of them, or only the latest N), test on month T+1.
 _Avoid_: Fold, split
