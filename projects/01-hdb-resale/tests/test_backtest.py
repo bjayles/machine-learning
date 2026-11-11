@@ -8,7 +8,7 @@ test month or later (project ADR-0001).
 import pandas as pd
 import pytest
 
-from hdb_resale.backtest import backtest
+from hdb_resale.backtest import backtest, backtest_periods
 
 from factories import make_clean
 
@@ -121,3 +121,17 @@ def test_end_shifts_the_windows_earlier_for_validation():
         max(trained_on) < pd.Period("2024-05", freq="M")
         for trained_on in model.train_months
     )
+
+
+def test_periods_validate_on_the_months_just_before_the_test_period():
+    model = SpyModel()
+
+    predictions = backtest_periods(make_clean(MONTHS), model, n_windows=2)
+
+    # 5 complete months: test on the latest 2, validate on the 2 before them
+    by_period = predictions.groupby("period")["month"].unique()
+    assert sorted(by_period["test"]) == months("2024-04", "2024-05")
+    assert sorted(by_period["validation"]) == months("2024-02", "2024-03")
+    # No validation window trains on the test period
+    validation_fits = model.train_months[2:]  # the test period runs first
+    assert all(max(m) < pd.Period("2024-04", freq="M") for m in validation_fits)

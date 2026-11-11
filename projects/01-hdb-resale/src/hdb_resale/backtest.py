@@ -82,3 +82,34 @@ def backtest(
         windows.append(test.assign(estimate=list(estimates)))
 
     return pd.concat(windows)
+
+
+def backtest_periods(
+    data: pd.DataFrame,
+    model: Model,
+    n_windows: int = 12,
+    train_months: int | None = None,
+) -> pd.DataFrame:
+    """Backtest the test period and the validation period just before it.
+
+    Settings are chosen on the validation period and reported on the test period, so
+    choosing never looks at the test months. Every run scores both.
+
+    Args:
+        data: The cleaned table (must match CLEAN_SCHEMA).
+        model: Refitted from scratch in every backtest window.
+        n_windows: Test months per period: the latest complete ones for the test
+            period, the ones just before them for the validation period.
+        train_months: As in `backtest()`.
+
+    Returns:
+        `backtest()` output for both periods, with a `period` column ("validation" or
+        "test").
+    """
+    test = backtest(data, model, n_windows, train_months)
+    validation = backtest(
+        data, model, n_windows, train_months, end=str(test["month"].min())
+    )
+    return pd.concat(
+        [validation.assign(period="validation"), test.assign(period="test")]
+    )
