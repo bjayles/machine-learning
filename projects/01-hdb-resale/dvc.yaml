@@ -1,0 +1,76 @@
+# The pipeline: `uv run dvc repro` reruns each stage whose command, deps or params
+# changed since dvc.lock, then what depends on its outputs. `uv run dvc dag` shows
+# the graph. It starts from the DVC-tracked raw snapshot: ingestion stays outside.
+#
+# Storage: the model is pushed to the DVC remote; outputs a rerun rebuilds exactly
+# (checked by hash) are not (push: false); metrics go to git (cache: false).
+
+stages:
+  clean:
+    cmd: hdb-resale clean
+    deps:
+      - data/raw/resale.csv
+      - src/hdb_resale/cli.py
+      - src/hdb_resale/clean.py
+      - src/hdb_resale/schemas.py
+    outs:
+      - data/interim/resale.parquet:
+          push: false
+
+  baseline:
+    cmd: hdb-resale baseline
+    deps:
+      - data/interim/resale.parquet
+      - src/hdb_resale/cli.py
+      - src/hdb_resale/backtest.py
+      - src/hdb_resale/baselines.py
+      - src/hdb_resale/schemas.py
+    params:
+      - baseline
+      - backtest
+    outs:
+      - data/predictions/baseline.parquet:
+          push: false
+
+  backtest:
+    cmd: hdb-resale backtest
+    deps:
+      - data/interim/resale.parquet
+      - src/hdb_resale/cli.py
+      - src/hdb_resale/backtest.py
+      - src/hdb_resale/models.py
+      - src/hdb_resale/schemas.py
+    params:
+      - model
+      - backtest
+    outs:
+      - data/predictions/model.parquet:
+          push: false
+
+  evaluate:
+    cmd: hdb-resale evaluate
+    deps:
+      - data/predictions/model.parquet
+      - data/predictions/baseline.parquet
+      - src/hdb_resale/cli.py
+      - src/hdb_resale/evaluate.py
+    metrics:
+      - metrics/summary.json:
+          cache: false
+    outs:
+      - metrics/windows.csv:
+          cache: false
+
+  train:
+    cmd: hdb-resale train
+    deps:
+      - data/interim/resale.parquet
+      - src/hdb_resale/cli.py
+      - src/hdb_resale/train.py
+      - src/hdb_resale/backtest.py
+      - src/hdb_resale/models.py
+      - src/hdb_resale/schemas.py
+    params:
+      - model
+    outs:
+      - models/model.pkl

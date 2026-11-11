@@ -1,0 +1,162 @@
+schema: '2.0'
+stages:
+  clean:
+    cmd: hdb-resale clean
+    deps:
+    - path: data/raw/resale.csv
+      hash: md5
+      md5: f5fc86f82bfc1224c959d9c7a6c7a3aa
+      size: 23990597
+    - path: src/hdb_resale/clean.py
+      hash: md5
+      md5: bddaae5273178877e270b2fcf112e820
+      size: 2012
+    - path: src/hdb_resale/cli.py
+      hash: md5
+      md5: 117e3d763569ebb00f971779aaeb5b72
+      size: 6021
+    - path: src/hdb_resale/schemas.py
+      hash: md5
+      md5: 18217a49fb672e58bbe614f9a52bde6a
+      size: 3398
+    outs:
+    - path: data/interim/resale.parquet
+      hash: md5
+      md5: eebe2630d9100ef2439cb93ca974e442
+      size: 2644561
+  baseline:
+    cmd: hdb-resale baseline
+    deps:
+    - path: data/interim/resale.parquet
+      hash: md5
+      md5: eebe2630d9100ef2439cb93ca974e442
+      size: 2644561
+    - path: src/hdb_resale/backtest.py
+      hash: md5
+      md5: 3636b5c9784bcc430f9e9dca1a6ea2a3
+      size: 4889
+    - path: src/hdb_resale/baselines.py
+      hash: md5
+      md5: b3450582c9e0e53569105ad1c51ee868
+      size: 3101
+    - path: src/hdb_resale/cli.py
+      hash: md5
+      md5: 117e3d763569ebb00f971779aaeb5b72
+      size: 6021
+    - path: src/hdb_resale/schemas.py
+      hash: md5
+      md5: 18217a49fb672e58bbe614f9a52bde6a
+      size: 3398
+    params:
+      params.yaml:
+        backtest:
+          n_windows: 12
+        baseline:
+          recent_months: 6
+    outs:
+    - path: data/predictions/baseline.parquet
+      hash: md5
+      md5: 9fac2790c41d726c60f6644ba58c5dbe
+      size: 602698
+  backtest:
+    cmd: hdb-resale backtest
+    deps:
+    - path: data/interim/resale.parquet
+      hash: md5
+      md5: eebe2630d9100ef2439cb93ca974e442
+      size: 2644561
+    - path: src/hdb_resale/backtest.py
+      hash: md5
+      md5: 3636b5c9784bcc430f9e9dca1a6ea2a3
+      size: 4889
+    - path: src/hdb_resale/cli.py
+      hash: md5
+      md5: 117e3d763569ebb00f971779aaeb5b72
+      size: 6021
+    - path: src/hdb_resale/models.py
+      hash: md5
+      md5: ac109bbe1c2d207972014a43457f9834
+      size: 7163
+    - path: src/hdb_resale/schemas.py
+      hash: md5
+      md5: 18217a49fb672e58bbe614f9a52bde6a
+      size: 3398
+    params:
+      params.yaml:
+        backtest:
+          n_windows: 12
+        model:
+          location: block
+          lease: bands
+          train_months: 24
+    outs:
+    - path: data/predictions/model.parquet
+      hash: md5
+      md5: 02054fa8160c478ac7ca5ddb5d92150e
+      size: 1080518
+  evaluate:
+    cmd: hdb-resale evaluate
+    deps:
+    - path: data/predictions/baseline.parquet
+      hash: md5
+      md5: 9fac2790c41d726c60f6644ba58c5dbe
+      size: 602698
+    - path: data/predictions/model.parquet
+      hash: md5
+      md5: 02054fa8160c478ac7ca5ddb5d92150e
+      size: 1080518
+    - path: src/hdb_resale/cli.py
+      hash: md5
+      md5: 117e3d763569ebb00f971779aaeb5b72
+      size: 6021
+    - path: src/hdb_resale/evaluate.py
+      hash: md5
+      md5: 75ae23fe4373e491371ee653a9819b15
+      size: 5002
+    outs:
+    - path: metrics/summary.json
+      hash: md5
+      md5: d8db5ee9a22f3c03a0e0acc872b31f61
+      size: 878
+    - path: metrics/windows.csv
+      hash: md5
+      md5: 1ad450f0462d385c20964770f6079054
+      size: 7096
+  train:
+    cmd: hdb-resale train
+    deps:
+    - path: data/interim/resale.parquet
+      hash: md5
+      md5: eebe2630d9100ef2439cb93ca974e442
+      size: 2644561
+    - path: src/hdb_resale/backtest.py
+      hash: md5
+      md5: 3636b5c9784bcc430f9e9dca1a6ea2a3
+      size: 4889
+    - path: src/hdb_resale/cli.py
+      hash: md5
+      md5: 117e3d763569ebb00f971779aaeb5b72
+      size: 6021
+    - path: src/hdb_resale/models.py
+      hash: md5
+      md5: ac109bbe1c2d207972014a43457f9834
+      size: 7163
+    - path: src/hdb_resale/schemas.py
+      hash: md5
+      md5: 18217a49fb672e58bbe614f9a52bde6a
+      size: 3398
+    - path: src/hdb_resale/train.py
+      hash: md5
+      md5: 89e32493c4cb60105d557e1baa702308
+      size: 1090
+    params:
+      params.yaml:
+        model:
+          location: block
+          lease: bands
+          train_months: 24
+    outs:
+    - path: models/model.pkl
+      hash: md5
+      md5: bb01bca1ce9d594611c8313457ea25f3
+      size: 510485
