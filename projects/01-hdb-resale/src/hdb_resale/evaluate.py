@@ -74,3 +74,52 @@ def good_enough(scores: pd.DataFrame, baseline_scores: pd.DataFrame) -> pd.Serie
             "bias": abs(scores["bias"].mean()) <= MAX_ABS_BIAS,
         }
     )
+
+
+def evaluate(
+    model_predictions: pd.DataFrame, baseline_predictions: pd.DataFrame
+) -> tuple[pd.DataFrame, dict]:
+    """Score the model and the reference baseline on both periods, and check the threshold.
+
+    Settings are chosen on the validation period's averages; the threshold is checked
+    on the test period's, since that's the score reported and gated on.
+
+    Args:
+        model_predictions: `backtest_periods()` output for the model.
+        baseline_predictions: The same for the reference baseline.
+
+    Returns:
+        The scores per backtest window (one row per estimator, period and window),
+        and a summary: each estimator's average scores per period, plus the
+        `good_enough()` conditions on the test period and whether `all` hold.
+    """
+    scores = {
+        "model": _score_periods(model_predictions),
+        "baseline": _score_periods(baseline_predictions),
+    }
+    windows = pd.concat(scores, names=["estimator"]).reset_index()
+
+    summary: dict = {
+        estimator: {
+            period: {
+                metric: round(float(value), 6)
+                for metric, value in by_window.drop(columns="sales").mean().items()
+            }
+            for period, by_window in estimator_scores.groupby(level="period")
+        }
+        for estimator, estimator_scores in scores.items()
+    }
+    checks = good_enough(scores["model"].loc["test"], scores["baseline"].loc["test"])
+    summary["good_enough"] = {
+        **{name: bool(passed) for name, passed in checks.items()},
+        "all": bool(checks.all()),
+    }
+    return windows, summary
+
+
+def _score_periods(predictions: pd.DataFrame) -> pd.DataFrame:
+    """`score()` each period separately, indexed by period and test month."""
+    return pd.concat(
+        {period: score(rows) for period, rows in predictions.groupby("period")},
+        names=["period"],
+    )

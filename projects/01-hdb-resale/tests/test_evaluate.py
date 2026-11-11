@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from hdb_resale.evaluate import good_enough, score
+from hdb_resale.evaluate import evaluate, good_enough, score
 
 
 def months(*values: str) -> list[pd.Period]:
@@ -68,3 +68,35 @@ def test_good_enough_checks_each_condition_of_the_threshold():
     assert not not_worth_it["log_mae"]  # 0.065 also breaks the 0.05 ceiling
     assert not wide_tail["p90_ape"] and wide_tail.drop("p90_ape").all()
     assert not biased["bias"] and biased.drop("bias").all()
+
+
+def periods_predictions(over: float) -> pd.DataFrame:
+    """Two windows per period, every estimate `over` (0.1 = 10%) above the price."""
+    month = months("2024-01", "2024-02", "2024-03", "2024-04")
+    return pd.DataFrame(
+        {
+            "period": ["validation", "validation", "test", "test"],
+            "month": month,
+            "resale_price": [500_000.0] * 4,
+            "estimate": [500_000.0 * (1 + over)] * 4,
+        }
+    )
+
+
+def test_evaluate_scores_each_estimator_and_period_and_checks_the_test_period():
+    windows, summary = evaluate(periods_predictions(0.0), periods_predictions(0.1))
+
+    # One row per estimator, period and backtest window
+    assert len(windows) == 2 * 4
+    assert set(windows["estimator"]) == {"model", "baseline"}
+    # Averages per estimator and period
+    assert summary["model"]["test"]["log_mae"] == pytest.approx(0.0)
+    assert summary["baseline"]["validation"]["mape"] == pytest.approx(0.1)
+    # The threshold is checked on the test period: an exact model passes everything
+    assert summary["good_enough"] == {
+        "half_the_baseline": True,
+        "log_mae": True,
+        "p90_ape": True,
+        "bias": True,
+        "all": True,
+    }
