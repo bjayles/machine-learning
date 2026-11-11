@@ -76,7 +76,9 @@ class HedonicRegression:
 
         # The coarser model, for flats whose street or block has no training sale
         if self.location in COARSER:
-            self.known_places_ = set(self._place(train))
+            # Sorted, not a set: a set's order changes with each Python process, so
+            # the saved model's bytes would too (same model, different file hash)
+            self.known_places_ = sorted(set(self._place(train)))
             self.coarser_ = HedonicRegression(
                 lease=self.lease, location=COARSER[self.location]
             ).fit(train)

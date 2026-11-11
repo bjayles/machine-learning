@@ -75,8 +75,8 @@ stages:
       size: 6021
     - path: src/hdb_resale/models.py
       hash: md5
-      md5: ac109bbe1c2d207972014a43457f9834
-      size: 7163
+      md5: 2492b8b195b6fe93ad7daf8d56b5ddcb
+      size: 7337
     - path: src/hdb_resale/schemas.py
       hash: md5
       md5: 18217a49fb672e58bbe614f9a52bde6a
@@ -139,8 +139,8 @@ stages:
       size: 6021
     - path: src/hdb_resale/models.py
       hash: md5
-      md5: ac109bbe1c2d207972014a43457f9834
-      size: 7163
+      md5: 2492b8b195b6fe93ad7daf8d56b5ddcb
+      size: 7337
     - path: src/hdb_resale/schemas.py
       hash: md5
       md5: 18217a49fb672e58bbe614f9a52bde6a
@@ -158,5 +158,5 @@ stages:
     outs:
     - path: models/model.pkl
       hash: md5
-      md5: bb01bca1ce9d594611c8313457ea25f3
+      md5: 1b4cb0b4237eb7825104b2040c57cb7f
       size: 510485
