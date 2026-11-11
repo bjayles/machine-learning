@@ -30,6 +30,20 @@ class Model(Protocol):
         ...
 
 
+def training_window(
+    data: pd.DataFrame, test_month: pd.Period, train_months: int | None
+) -> pd.DataFrame:
+    """The sales a model learns from to estimate `test_month`.
+
+    Only months before it (never the future), and with `train_months`, only the N
+    months just before it (sliding window); otherwise all of them (expanding window).
+    """
+    train = data[data["month"] < test_month]
+    if train_months is not None:
+        train = train[train["month"] >= test_month - train_months]
+    return train
+
+
 def backtest(
     data: pd.DataFrame,
     model: Model,
@@ -71,12 +85,9 @@ def backtest(
 
     windows = []
     for test_month in test_months:
-        train = data[data["month"] < test_month]
-        if train_months is not None:
-            train = train[train["month"] >= test_month - train_months]
         test = data[data["month"] == test_month]
 
-        model.fit(train)
+        model.fit(training_window(data, test_month, train_months))
         # The model gets the test transactions without their prices: no peeking
         estimates = model.predict(test.drop(columns="resale_price"))
         windows.append(test.assign(estimate=list(estimates)))
