@@ -1,12 +1,12 @@
 # HDB Resale Price Estimator
 
-**Status:** step 2 (baseline + time-based validation) complete. The
-current model, a hedonic regression with block-level location, is within
-3.1% of the resale price for half of the test sales, and within 8.7% for 9
-in 10 ([residual analysis](notebooks/04-residuals.ipynb)), against 8.6% and
-25.7% for the reference baseline, the median of recent sales of the same
-town and flat type ([baselines](notebooks/02-baselines.ipynb)). Next: step 3,
-the DVC pipeline and MLflow tracking.
+**Status:** step 3 (DVC pipeline + MLflow tracking) in progress: the
+pipeline is in place, MLflow tracking comes next. The current model, a
+hedonic regression with block-level location, is within 3.1% of the resale
+price for half of the test sales, and within 8.7% for 9 in 10
+([residual analysis](notebooks/04-residuals.ipynb)), against 8.6% and 25.7%
+for the reference baseline, the median of recent sales of the same town and
+flat type ([baselines](notebooks/02-baselines.ipynb)).
 
 An estimator of fair resale prices for Singapore HDB flats, built as a
 production-standard ML project: versioned data, a reproducible pipeline,
@@ -130,7 +130,7 @@ Run everything from this folder (`projects/01-hdb-resale/`).
 uv sync                                     # install the project and DVC
 aws sso login --profile bjayles-workloads-admin
 uv run dvc remote modify --local storage profile bjayles-workloads-admin
-uv run dvc pull                             # fetch data/raw/resale.csv from S3
+uv run dvc pull                             # fetch the snapshot and the trained model from S3
 ```
 
 The `dvc remote modify --local` line is needed once per clone: it tells DVC
@@ -143,24 +143,58 @@ uv run hdb-resale ingest                    # writes data/raw/resale.csv + snaps
 uv run dvc add data/raw/resale.csv          # version it (then commit, and dvc push)
 ```
 
+Ingestion stays outside the pipeline below: its input is the live API, which
+changes every month, so the pipeline starts from the versioned snapshot. A new
+snapshot changes its hash, and the next `dvc repro` reruns everything after it.
+
 `data/raw/snapshot.json` records where and when each snapshot came from:
 access date, the source's last update, row count, columns, and a sha256
 fingerprint of the file.
 
-## Cleaning the data
+## Running the pipeline
 
 ```bash
-uv run hdb-resale clean                     # data/raw/resale.csv -> data/interim/resale.parquet
-uv run pytest                               # the cleaning rules' tests
+uv run dvc repro                            # rerun what changed since the last run
+uv run dvc metrics show                     # the latest scores
+uv run dvc dag                              # the stages, in the terminal
+uv run pytest                               # the tests
 ```
 
-The cleaned table keeps every raw row and column, with typed and numeric
-versions added (registration month as a period, remaining lease in years,
-middle storey, flat model group). Each rule comes from the decision summary
-of the [EDA notebook](notebooks/01-eda.ipynb). The raw and cleaned tables
-are checked against data contracts (Pandera schemas in `schemas.py`), so
-any missing value, unknown format or changed column stops the cleaning. `data/interim/` is not versioned: it's
-rebuilt from the raw snapshot.
+```mermaid
+flowchart LR
+    api(["data.gov.sg API"]) -. "hdb-resale ingest<br/>+ dvc add (manual)" .-> raw[("data/raw/resale.csv<br/>snapshot")]
+    raw --> clean
+    clean --> cleaned[("data/interim/<br/>resale.parquet")]
+    params[/"params.yaml"/] -.-> baseline & backtest & train
+    cleaned --> baseline & backtest & train
+    baseline --> bpred[("data/predictions/<br/>baseline.parquet")]
+    backtest --> mpred[("data/predictions/<br/>model.parquet")]
+    bpred & mpred --> evaluate
+    evaluate --> metrics["metrics/summary.json<br/>metrics/windows.csv"]
+    train --> model[("models/model.pkl")]
+```
+
+| Stage | What it does |
+|---|---|
+| `clean` | Types and checks the snapshot (rules from the [EDA notebook](notebooks/01-eda.ipynb), Pandera data contracts in `schemas.py`): any missing value, unknown format or changed column stops the pipeline. |
+| `baseline` | Backtests the reference baseline (town + flat type median) on the validation and test periods. |
+| `backtest` | Backtests the model on the same windows. |
+| `evaluate` | Scores both per backtest window and period, and checks the "good enough" threshold on the test period. |
+| `train` | Fits the model to ship once, on the latest complete months. |
+
+Settings are chosen on the **validation period** and reported on the **test
+period**: every run scores both, so choosing never looks at the test months.
+
+`dvc.yaml` declares each stage's command, the files it reads and writes, and the
+settings it uses from `params.yaml` (chosen in notebooks 02–04). `dvc.lock`
+records what produced the current outputs (file hashes and settings), and
+`dvc repro` reruns only the stages whose inputs changed since, then what
+depends on their outputs.
+
+**Where outputs live:** the trained model is pushed to the DVC remote; the other
+data outputs are not, since a rerun rebuilds them byte for byte (checked by
+their hashes); the metrics are small text files, committed to git so every
+change to them shows in a diff.
 
 ## Data licence and attribution
 
