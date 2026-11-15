@@ -7,12 +7,12 @@ and the "never train on the future" rule lives here, once.
 
 A model is anything with `fit(train)` and `predict(test) -> estimates`, the
 scikit-learn convention. The harness returns estimates, not scores: the metric is
-chosen from the residual analysis (project ADR-0006), and scoring is a separate step.
+chosen from the residual analysis (project ADR-0006), and scoring is a separate step
+(evaluate.py).
 """
 
 from typing import Protocol
 
-import numpy as np
 import pandas as pd
 
 from hdb_resale.schemas import CLEAN_SCHEMA
@@ -28,6 +28,20 @@ class Model(Protocol):
     def predict(self, test: pd.DataFrame) -> pd.Series:
         """Return one estimate per test transaction (resale prices removed)."""
         ...
+
+
+def training_window(
+    data: pd.DataFrame, test_month: pd.Period, train_months: int | None
+) -> pd.DataFrame:
+    """The sales a model learns from to estimate `test_month`.
+
+    Only months before it (never the future), and with `train_months`, only the N
+    months just before it (sliding window); otherwise all of them (expanding window).
+    """
+    train = data[data["month"] < test_month]
+    if train_months is not None:
+        train = train[train["month"] >= test_month - train_months]
+    return train
 
 
 def backtest(
@@ -71,12 +85,9 @@ def backtest(
 
     windows = []
     for test_month in test_months:
-        train = data[data["month"] < test_month]
-        if train_months is not None:
-            train = train[train["month"] >= test_month - train_months]
         test = data[data["month"] == test_month]
 
-        model.fit(train)
+        model.fit(training_window(data, test_month, train_months))
         # The model gets the test transactions without their prices: no peeking
         estimates = model.predict(test.drop(columns="resale_price"))
         windows.append(test.assign(estimate=list(estimates)))
@@ -84,68 +95,32 @@ def backtest(
     return pd.concat(windows)
 
 
-def score(predictions: pd.DataFrame) -> pd.DataFrame:
-    """Score each backtest window: error size, bias and spread.
+def backtest_periods(
+    data: pd.DataFrame,
+    model: Model,
+    n_windows: int = 12,
+    train_months: int | None = None,
+) -> pd.DataFrame:
+    """Backtest the test period and the validation period just before it.
 
-    The primary metric is `log_mae` (project ADR-0006); the others are reported to
-    read it (`mdape`, `p90_ape`, `mae`) or to check it (`bias`). Relative metrics
-    are fractions (0.05 = 5%).
-
-    Args:
-        predictions: `backtest()` output: `month`, `resale_price` and `estimate`.
-
-    Returns:
-        One row per backtest window (indexed by test month): `sales`, `mae` (S$),
-        `mape`, `mdape`, `p90_ape`, `log_mae` and `bias`.
-    """
-    # log(price / estimate): > 0 when the estimate is too low
-    residual = np.log(predictions["resale_price"] / predictions["estimate"])
-    errors = pd.DataFrame(
-        {
-            "month": predictions["month"],
-            "abs_error": (predictions["estimate"] - predictions["resale_price"]).abs(),
-            "residual": residual,
-            "log_error": residual.abs(),
-        }
-    )
-    errors["pct_error"] = errors["abs_error"] / predictions["resale_price"]
-
-    return errors.groupby("month").agg(
-        sales=("abs_error", "size"),
-        mae=("abs_error", "mean"),  # average error in S$
-        mape=("pct_error", "mean"),  # average error in %
-        mdape=("pct_error", "median"),  # typical error in %, robust to a few big misses
-        p90_ape=("pct_error", lambda e: e.quantile(0.9)),  # 9 in 10 within this
-        log_mae=("log_error", "mean"),  # primary: average error on log prices
-        bias=("residual", "mean"),  # > 0: estimates too low on average
-    )
-
-
-# The "good enough" threshold (project ADR-0006), on the average over the backtest windows
-MAX_SHARE_OF_BASELINE = 0.5  # log-space MAE at most half the reference baseline's
-MAX_LOG_MAE = 0.05  # about 5% average error
-MAX_P90_APE = 0.10  # 9 in 10 estimates within 10%
-MAX_ABS_BIAS = 0.01  # estimates no more than 1% too high or too low on average
-
-
-def good_enough(scores: pd.DataFrame, baseline_scores: pd.DataFrame) -> pd.Series:
-    """Check a model's backtest scores against each condition of the threshold.
+    Settings are chosen on the validation period and reported on the test period, so
+    choosing never looks at the test months. Every run scores both.
 
     Args:
-        scores: `score()` output for the model.
-        baseline_scores: `score()` output for the reference baseline, on the same
-            backtest windows.
+        data: The cleaned table (must match CLEAN_SCHEMA).
+        model: Refitted from scratch in every backtest window.
+        n_windows: Test months per period: the latest complete ones for the test
+            period, the ones just before them for the validation period.
+        train_months: As in `backtest()`.
 
     Returns:
-        One boolean per condition; the model is good enough if all are True.
+        `backtest()` output for both periods, with a `period` column ("validation" or
+        "test").
     """
-    log_mae = scores["log_mae"].mean()
-    return pd.Series(
-        {
-            "half_the_baseline": log_mae
-            <= MAX_SHARE_OF_BASELINE * baseline_scores["log_mae"].mean(),
-            "log_mae": log_mae <= MAX_LOG_MAE,
-            "p90_ape": scores["p90_ape"].mean() <= MAX_P90_APE,
-            "bias": abs(scores["bias"].mean()) <= MAX_ABS_BIAS,
-        }
+    test = backtest(data, model, n_windows, train_months)
+    validation = backtest(
+        data, model, n_windows, train_months, end=str(test["month"].min())
+    )
+    return pd.concat(
+        [validation.assign(period="validation"), test.assign(period="test")]
     )

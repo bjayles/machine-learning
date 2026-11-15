@@ -1,0 +1,45 @@
+{
+  "model": {
+    "test": {
+      "mae": 26951.37867,
+      "mape": 0.04084,
+      "mdape": 0.031419,
+      "p90_ape": 0.086776,
+      "log_mae": 0.040673,
+      "bias": -0.001143
+    },
+    "validation": {
+      "mae": 24338.861351,
+      "mape": 0.037685,
+      "mdape": 0.029749,
+      "p90_ape": 0.078905,
+      "log_mae": 0.037741,
+      "bias": 0.003432
+    }
+  },
+  "baseline": {
+    "test": {
+      "mae": 81858.975649,
+      "mape": 0.120151,
+      "mdape": 0.085629,
+      "p90_ape": 0.256907,
+      "log_mae": 0.121925,
+      "bias": 0.010282
+    },
+    "validation": {
+      "mae": 73794.122104,
+      "mape": 0.108888,
+      "mdape": 0.077611,
+      "p90_ape": 0.229568,
+      "log_mae": 0.111823,
+      "bias": 0.028372
+    }
+  },
+  "good_enough": {
+    "half_the_baseline": true,
+    "log_mae": true,
+    "p90_ape": true,
+    "bias": true,
+    "all": true
+  }
+}

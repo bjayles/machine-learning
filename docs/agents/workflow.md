@@ -12,6 +12,8 @@ Every commit runs the hooks in `.pre-commit-config.yaml` (Ruff for each project,
 
 When a hook modifies files (Ruff fixes, formatting, whitespace), the commit stops on purpose: review the diff, `git add` the fixed files, and commit again. A hook that fails without fixing anything points at a real problem: fix the cause and keep every commit going through the hooks (no `--no-verify`).
 
+The Ruff hooks check the whole project folder, not just the staged files. When splitting work into several commits, a file left out of a commit can still fail its hook: commit the config change that file depends on first, or set the file aside until its own commit.
+
 ## Project commands
 
 Each project is independent (repo ADR-0001): run its commands from its folder (`projects/<project>/`), or from the root with `uv run --directory projects/<project> ...`.

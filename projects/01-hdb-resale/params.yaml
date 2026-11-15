@@ -1,0 +1,14 @@
+# The recipe's settings (hyperparameters), read by the pipeline stages in dvc.yaml.
+# Chosen on the validation period (notebooks 02-04); each stage reruns only when
+# the sections it lists change.
+
+model:                # HedonicRegression, read by `backtest` and `train`
+  location: block     # town < street < block (notebook 04)
+  lease: bands        # 5-year bands of remaining lease (notebook 03)
+  train_months: 24    # sliding window: the 24 months before each test month
+
+baseline:             # the reference for "at most half the baseline's error"
+  recent_months: 6    # median of the latest 6 months' sales (notebook 02)
+
+backtest:
+  n_windows: 12       # test months per period (validation, then test)
