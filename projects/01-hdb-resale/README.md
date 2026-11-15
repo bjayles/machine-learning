@@ -162,10 +162,10 @@ uv run pytest                               # the tests
 
 ```mermaid
 flowchart LR
-    api(["data.gov.sg API"]) -. "hdb-resale ingest<br/>+ dvc add (manual)" .-> raw[("data/raw/resale.csv<br/>snapshot")]
+    api(["HDB resale data<br/>data.gov.sg (online)"]) -. "manual: hdb-resale ingest<br/>+ dvc add" .-> raw[("data/raw/resale.csv<br/>snapshot")]
     raw --> clean
     clean --> cleaned[("data/interim/<br/>resale.parquet")]
-    params[/"params.yaml"/] -.-> baseline & backtest & train
+    params[/"params.yaml"/] -. "settings" .-> baseline & backtest & train
     cleaned --> baseline & backtest & train
     baseline --> bpred[("data/predictions/<br/>baseline.parquet")]
     backtest --> mpred[("data/predictions/<br/>model.parquet")]
@@ -173,6 +173,9 @@ flowchart LR
     evaluate --> metrics["metrics/summary.json<br/>metrics/windows.csv"]
     train --> model[("models/model.pkl")]
 ```
+
+Solid arrows: data that `dvc repro` passes from stage to stage. Dashed arrows:
+the manual download, outside the pipeline, and the settings each stage reads.
 
 | Stage | What it does |
 |---|---|
