@@ -102,7 +102,7 @@ is retrained monthly and used on the following month. See
 |---|---|
 | Primary metric and the "good enough" threshold | 2: decided ([ADR-0006](docs/adr/0006-log-mae-and-good-enough-threshold.md)) |
 | Geocoding via OneMap (separate terms and account) | 2: deferred, revisit if new blocks become a larger share |
-| MLflow hosting | 3 |
+| MLflow hosting | 3: decided ([ADR-0007](docs/adr/0007-mlflow-local-tracking-s3-artifacts.md)), revisit at 7 |
 | Demo name, input granularity, disclaimer wording, final legal check | 6 |
 | Keeping the monthly schedule running long term | 7 |
 
@@ -114,6 +114,7 @@ is retrained monthly and used on the following month. See
 - [ADR-0004](docs/adr/0004-pandas-not-polars.md): pandas, not Polars, with Pandera data contracts
 - [ADR-0005](docs/adr/0005-month-levels-carried-forward.md): time as month levels, the latest carried forward
 - [ADR-0006](docs/adr/0006-log-mae-and-good-enough-threshold.md): log-space MAE as the primary metric, and the "good enough" threshold
+- [ADR-0007](docs/adr/0007-mlflow-local-tracking-s3-artifacts.md): MLflow tracking runs locally, artifacts go to S3
 
 Repo-wide conventions (independent package, shared data bucket) are in the
 root [ADR-0001](../../docs/adr/0001-monorepo-conventions.md), and the data
